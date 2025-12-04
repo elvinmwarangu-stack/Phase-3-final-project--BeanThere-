@@ -1,14 +1,16 @@
 # beanthere/reports.py
 from rich.console import Console
+from beanthere.engine import get_session
+from beanthere.models import Drink
 from datetime import date
 import csv
 from collections import Counter
 
-from beanthere.engine import get_session
-from beanthere.models import Drink
-
 console = Console()
 
+# -------------------------
+# Rating dictionary
+# -------------------------
 VIBE_SCALE = {
     4.7: "[bold magenta]Transcendent[/]",
     4.2: "[bold green]Excellent[/]",
@@ -16,11 +18,11 @@ VIBE_SCALE = {
     0:   "[red]Needs work[/]"
 }
 
-
-
 def daily_report():
-    with get_session() as session:
-        drinks_today = session.query(Drink).filter(Drink.created_at >= date.today()).all()
+    session = get_session()
+    today = date.today()
+    drinks_today = session.query(Drink).filter(Drink.created_at >= today).all()
+    session.close()
 
     if not drinks_today:
         console.print("[yellow]No drinks logged today yet.[/]")
@@ -31,12 +33,13 @@ def daily_report():
     profit = revenue - cost
     avg_rating = sum(d.rating for d in drinks_today) / len(drinks_today)
 
-    vibe = (
-        "[bold magenta]Transcendent[/]" if avg_rating >= 4.7 else
-        "[bold green]Excellent[/]" if avg_rating >= 4.2 else
-        "[yellow]Good[/]" if avg_rating >= 3.5 else
-        "[red]Needs work[/]"
-    )
+    # -------------------------
+    # Vibe via dictionary lookup
+    # -------------------------
+    for score, description in VIBE_SCALE.items():
+        if avg_rating >= score:
+            vibe = description
+            break
 
     top_bean = Counter(d.bean.name for d in drinks_today).most_common(1)[0]
 
@@ -50,10 +53,12 @@ def daily_report():
 
 
 def export_csv():
-    with get_session() as session:
-        drinks = session.query(Drink).filter(Drink.created_at >= date.today()).all()
+    session = get_session()
+    today = date.today()
+    drinks = session.query(Drink).filter(Drink.created_at >= today).all()
+    session.close()
 
-    filename = f"beanthere_{date.today()}.csv"
+    filename = f"beanthere_{today}.csv"
     with open(filename, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["Time", "Bean", "Origin", "Grams", "Price", "Rating", "Notes", "Flavors"])
