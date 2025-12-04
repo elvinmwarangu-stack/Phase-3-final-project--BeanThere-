@@ -1,18 +1,18 @@
 # beanthere/reports.py
 from rich.console import Console
-from beanthere.engine import get_session
-from beanthere.models import Drink
 from datetime import date
 import csv
 from collections import Counter
 
+from beanthere.engine import get_session
+from beanthere.models import Drink
+
 console = Console()
 
+
 def daily_report():
-    session = get_session()
-    today = date.today()
-    drinks_today = session.query(Drink).filter(Drink.created_at >= today).all()
-    session.close()
+    with get_session() as session:
+        drinks_today = session.query(Drink).filter(Drink.created_at >= date.today()).all()
 
     if not drinks_today:
         console.print("[yellow]No drinks logged today yet.[/]")
@@ -40,13 +40,12 @@ def daily_report():
     console.print(f"Vibe check    : {avg_rating:.2f}/5 → {vibe}")
     console.print(f"Top bean      : [cyan]{top_bean[0]}[/] ({top_bean[1]} drinks)")
 
-def export_csv():
-    session = get_session()
-    today = date.today()
-    drinks = session.query(Drink).filter(Drink.created_at >= today).all()
-    session.close()
 
-    filename = f"beanthere_{today}.csv"
+def export_csv():
+    with get_session() as session:
+        drinks = session.query(Drink).filter(Drink.created_at >= date.today()).all()
+
+    filename = f"beanthere_{date.today()}.csv"
     with open(filename, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["Time", "Bean", "Origin", "Grams", "Price", "Rating", "Notes", "Flavors"])
@@ -57,4 +56,5 @@ def export_csv():
                 d.bean.name, d.bean.origin, d.grams_used,
                 d.price_paid, d.rating, d.notes, flavors
             ])
+
     console.print(f"[green]Exported to {filename}[/]")
