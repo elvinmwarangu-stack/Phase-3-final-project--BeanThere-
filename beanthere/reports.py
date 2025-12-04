@@ -9,6 +9,14 @@ from beanthere.models import Drink
 
 console = Console()
 
+VIBE_SCALE = {
+    4.7: "[bold magenta]Transcendent[/]",
+    4.2: "[bold green]Excellent[/]",
+    3.5: "[yellow]Good[/]",
+    0:   "[red]Needs work[/]"
+}
+
+
 
 def daily_report():
     with get_session() as session:
