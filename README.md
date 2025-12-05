@@ -1,168 +1,124 @@
-# ☕ BeanThere — Coffee Shop CLI Management System
+## BeanThere — Coffee Shop CLI Management System
 
-**BeanThere** is a Python + SQLAlchemy + Click powered CLI application designed to help baristas manage coffee inventory, log drinks, record tasting notes, generate sales reports, and export data for business insights.
+BeanThere is a Python + SQLAlchemy + Click based CLI application built to manage coffee inventory, log drink sales, track tasting notes, generate business reports, and export daily records.
 
-This project represents the culmination of **Phase 3** (Python + SQL + ORM), demonstrating object-oriented programming, database relationships, command-line tooling, and real-world application design.
+This project completes Phase 3 by demonstrating database modeling, ORM relationships, CLI tooling, CSV exports, and practical application architecture.
 
----
+## Core Purpose
+Business Need	BeanThere's Solution
+Track coffee inventory	View, add and restock beans
+Record daily drinks	Log sales, grams used, bean notes
+Determine profitability	Automatic daily cost vs revenue reports
+Save tasting notes	Flavor tags stored and queryable
+Export drink history	CSV file generation for review
+Quick demo setup	Seed script populates sample records
+## Key Features
+1.Inventory Management
 
-##  Core Purpose
+2.Add new coffee beans
 
-A coffee shop must track essential business metrics. Here's how BeanThere solves each challenge:
+3.Restock existing beans
 
-| Question | BeanThere's Solution |
-|----------|----------------------|
-| How much coffee is in stock? | View, add, and restock beans |
-| What drinks were made today? | Log drinks with bean usage + flavors |
-| How profitable were sales? | Auto-generated daily sales report |
-| Can I review tasting notes later? | Flavor profiles saved as many-to-many data |
-| Can I export today's sales? | Yes — CSV export included |
+4.Tracks origin, cost per kilogram, roast details, stock in grams
 
----
+5.Low stock notification below 250g
 
-##  Key Features
+6.Drink Logging
 
-### ☕ **Inventory Management**
-- Add new beans or restock existing ones
-- Tracks origin, cost, grams remaining
-- Low stock warnings at <250g
+7.Logs grams used, price, rating and tasting notes
 
-###  **Drink Logging**
-- Deducts grams used from bean stock automatically
-- Supports tasting notes + multiple flavors
-- Stores drink rating + price paid
+8.Automatically deducts stock from inventory
 
-###  **Reporting**
-Daily report includes:
-- Number of drinks served
-- Revenue + bean cost + profit
-- Average rating → "vibe indicator"
-- Top-selling bean of the day
+9.Supports multiple flavor tags per drink (many-to-many)
 
-###  **CSV Export**
-- Saves timestamp, beans used, grams, price, rating, notes & flavors
-- Ready for Excel / analytics / email to management
+10.Reporting
 
----
+## Daily report calculates:
 
-##  Technologies Used
+Metric	Example Output
+Total drinks served	7
+Total revenue	24.50
+Bean cost used	7.10
+Profit	17.40
+Average drink rating	4.6
+Most used bean	Kenya AA
+CSV Export
 
-| Tool | Role |
-|------|------|
-| **Python** | Core language |
-| **SQLAlchemy ORM** | Database + model relationships |
-| **SQLite** | Local persistent database |
-| **Click** | CLI command system |
-| **CSV Module** | Exporting drink history |
-| **Rich** | Terminal formatting & colors |
+## Exports drink history for the day including:
 
----
+Time | Bean | Origin | Grams Used | Price | Rating | Notes | Flavor Tags
 
-##  Database Schema
+Useful for analytics, finance reports, supervisors and backups.
 
-### Tables
+seed.py — Purpose and Use
 
-| Table | Description |
-|-------|-------------|
-| `beans` | Sources of coffee, inventory, cost, origin |
-| `drinks` | Logged sales + grams used + ratings |
-| `flavors` | Individual notes like Chocolate, Berry, Citrus |
-| `drink_flavor` | Many-to-many join for tasting profiles |
+seed.py ensures the application is testable immediately by populating the database with starter beans, flavors and sample drink logs.
 
-### Relationships
+Run seeding:
 
-- **Bean** 1 → many **Drinks**
-- **Drink** many ↔ many **Flavors**
+python3 -m beanthere.seed
 
- **Satisfies requirement:** 3+ interrelated tables
 
----
+It inserts:
 
-##  Project Structure
+Data Type	Examples
+Beans	Colombia, Ethiopia, Brazil, Kenya
+Flavors	Chocolate, Citrus, Floral, Caramel
+Drinks	Pre-logged drinks with ratings and grams used
 
-```
+This script eliminates empty-database setup time and is ideal for demonstrations, testing and grading.
+
+## Project Structure
 beanthere/
-├── cli.py          # CLI entrypoint (Click-based commands)
-├── engine.py       # Database connection + session factory
-├── models.py       # SQLAlchemy ORM models (3+ tables)
-├── reports.py      # Sales metrics + CSV export
+├── cli.py          # CLI commands: add, restock, log, inventory, report, export
+├── engine.py       # SQLite engine + SessionLocal
+├── models.py       # Beans, Drinks, Flavors, drink_flavor association table
+├── reports.py      # Business logic and CSV export functions
+├── seed.py         # Fills DB with starter sample data
 └── __init__.py
 
-beanthere.db        # Generated SQLite database
+beanthere.db        # SQLite persistent database
 README.md           # Project documentation
-```
 
- **Matches Phase 3 best practices:**
-- ✔ Separate modules
-- ✔ ORM database modeling
-- ✔ CLI-driven operations
-- ✔ Clear app layout
+## How to Run the Program
 
----
+Install dependencies:
 
-##  How to Run The App
-
-### 1. Install Dependencies
-
-```bash
 pip install click sqlalchemy rich
-```
 
-### 2. Create Database Tables
 
-```bash
-python3
-```
+Create the database:
 
-```python
-from beanthere.engine import engine
 from beanthere.models import Base
-Base.metadata.create_all(bind=engine)
-quit()
-```
+from beanthere.engine import engine
+Base.metadata.create_all(engine)
 
-### 3. Run the CLI
 
-From project root:
+Seed sample data (optional but recommended):
 
-```bash
-python3 -m beanthere.cli
-```
+python3 -m beanthere.seed
 
----
 
-##  Example Usage
+Run commands:
 
-| Action | Command |
-|--------|---------|
-| Add new bean | `python3 -m beanthere.cli addbean "Kenya AA" Kenya 500` |
-| View inventory | `python3 -m beanthere.cli inventory` |
-| Log a drink | `python3 -m beanthere.cli log "Kenya AA" 18 4.5 --rating 5 --notes "Citrus" --flavors "Berry, Lemon"` |
-| Generate report | `python3 -m beanthere.cli report` |
-| Export CSV | `python3 -m beanthere.cli export` |
+python3 -m beanthere.cli inventory
+python3 -m beanthere.cli addbean "Kenya AA" Kenya 500
+python3 -m beanthere.cli log "Kenya AA" 18 4.5 --rating 5 --notes "Sweet and bright" --flavors "Berry,Lemon"
+python3 -m beanthere.cli report
+python3 -m beanthere.cli export
 
----
+## Final Summary
 
-##  How This Project Fulfills Phase 3 Requirements
+BeanThere is a complete command-line management system designed for a coffee business. It provides inventory control, sales logging, tasting notes management, profitability reporting, and CSV exporting. The included seeding script allows quick demonstration without manual data entry.
 
-| Requirement | Delivered |
-|-------------|-----------|
-| CLI App solving real-world problem | ✔ Coffee shop management system |
-| SQLAlchemy ORM + 3+ tables | ✔ Beans / Drinks / Flavors / Join table |
-| Proper package structure | ✔ Separate CLI, models, engine, reports |
-| Uses lists/tuples/dicts | ✔ Flavor lists, Counter tuples, vibe dict |
-| Real business application | ✔ Inventory + sales + profit analysis |
+This project successfully demonstrates:
 
----
+Python modular programming
 
-##  Final Summary
+SQLAlchemy ORM with multiple table relationships
 
-**BeanThere** is a fully functional command-line application built to manage coffee inventory, track drinks, generate daily business insights, and export sales history.
+CLI design and user interaction logic
 
-It showcases:
-- Python fundamentals & OOP structure
-- Database modeling & ORM relationships
-- Practical CLI design with Click
-- Real-world application patterns
+CSV reporting and business analytics
 
- **Satisfies all Phase 3 milestone expectations**
+Practical real-world application workflow
