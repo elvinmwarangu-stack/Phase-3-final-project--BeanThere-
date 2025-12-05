@@ -1,0 +1,101 @@
+#Step 0: Introduction
+
+#"Hello! Today I’m demonstrating BeanThere, a command-line application designed to help coffee shops manage inventory, log drinks, track flavors, and generate daily reports."
+
+#"Let’s start by making sure our database and tables are ready."
+
+#Step 1: Adding Beans
+
+#Command:
+
+#python3 -m beanthere.cli addbean "Colombia Supremo" Colombia 500
+#python3 -m beanthere.cli addbean "Ethiopia Sidamo" Ethiopia 300
+#python3 -m beanthere.cli addbean "Kenya AA" Kenya 400
+
+
+#Narration:
+#"First, we add some beans to our inventory. Here I’m adding Colombia Supremo, Ethiopia Sidamo, and Kenya AA. Each bean has a specified origin and quantity in grams."
+
+#"This populates our inventory table, so the coffee shop knows exactly what is in stock."
+
+#Step 2: Viewing Inventory
+
+#Command:
+
+#python3 -m beanthere.cli inventory
+
+
+#Narration:
+#"Next, we check our inventory. The CLI displays the bean name, origin, stock level, and a status indicator."
+
+#"Beans below 250 grams would show a low-stock warning. This helps baristas quickly see which beans need restocking."
+
+#Step 3: Logging Drinks
+
+#Commands:
+
+#python3 -m beanthere.cli log "Colombia Supremo" 18 5.0 --rating 5 --notes "Smooth & nutty" --flavors "Chocolate, Berry"
+#python3 -m beanthere.cli log "Ethiopia Sidamo" 20 4.0 --rating 4 --notes "Bright acidity" --flavors "Citrus, Floral"
+#python3 -m beanthere.cli log "Kenya AA" 22 4.5 --rating 5 --notes "Fruity & clean" --flavors "Berry, Lemon"
+
+
+#Narration:
+#"Here I log three drinks made today. The system automatically deducts the grams used from each bean’s stock."
+
+#"We can also record tasting notes, rating the drink from 1 to 5, and associate flavors using a many-to-many relationship."
+
+#This makes it easy to track what beans and flavors customers enjoyed."
+
+#Step 4: Check Inventory Again
+
+#Command:
+
+#python3 -m beanthere.cli inventory
+
+
+#Narration:
+#"After logging the drinks, we can see that the stock has been updated. For example, Colombia Supremo went from 500 grams to 482 grams after one drink."
+
+#"The system ensures inventory always reflects real usage."
+
+#Step 5: Generate Daily Report
+
+#Command:
+
+#python3 -m beanthere.cli report
+
+
+#Narration:
+#"Now we generate the daily report. This summarizes all drinks made today, showing total revenue, bean cost, and profit."
+
+#"It also calculates the average rating, which we use to provide a 'vibe check', like 'Excellent' or 'Transcendent'."
+
+#"The top-selling bean of the day is also highlighted, giving immediate business insights."
+
+#Step 6: Export CSV
+
+#Command:
+
+#python3 -m beanthere.cli export
+
+
+#Narration:
+#"Finally, we can export today’s drinks to a CSV file. This includes timestamps, beans, grams used, price, rating, notes, and flavors."
+
+#"This file can be used for analytics, reports, or sharing with management. It’s a simple way to back up data or review trends."
+
+#Optional Step: Seed Sample Data
+
+#Command:
+
+#python3 -m beanthere.seed
+
+
+#Narration:
+#"We can also seed the database with sample beans for testing. This is useful if we want to quickly populate the inventory without manually adding each bean."
+
+#Step 7: Conclusion
+
+#"That concludes our demonstration of BeanThere. We’ve seen how to manage inventory, log drinks, track flavors, generate reports, and export CSV files."
+
+#"This CLI application provides a simple but powerful tool for a coffee shop to monitor daily operations, track inventory, and gain insights into business performance."
