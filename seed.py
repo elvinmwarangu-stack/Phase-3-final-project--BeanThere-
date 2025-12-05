@@ -3,13 +3,13 @@ from beanthere.engine import get_session, Base, engine
 from beanthere.models import Bean, Drink, Flavor
 from datetime import datetime
 
-# 1️⃣ Ensure tables exist
+# 1️ Ensure tables exist
 Base.metadata.create_all(engine)
 
-# 2️⃣ Open session
+# 2️ Open session
 session = get_session()
 
-# 3️⃣ Create sample beans (expanded list)
+# 3️ Create sample beans (expanded list)
 beans = [
     Bean(name="Colombia Supremo", origin="Colombia", grams_in_stock=500),
     Bean(name="Ethiopia Sidamo", origin="Ethiopia", grams_in_stock=300),
@@ -23,7 +23,7 @@ beans = [
 session.add_all(beans)
 session.commit()  # Commit beans first
 
-# 4️⃣ Create sample flavors
+# 4️Create sample flavors
 flavors = [
     Flavor(name="Chocolate"),
     Flavor(name="Berry"),
@@ -36,7 +36,7 @@ flavors = [
 session.add_all(flavors)
 session.commit()  # Commit flavors first
 
-# 5️⃣ Log sample drinks
+# 5️ Log sample drinks
 drink1 = Drink(
     bean=beans[0],  # Colombia Supremo
     grams_used=18,
@@ -69,11 +69,11 @@ drink3.flavors.extend([flavors[4], flavors[5]])  # Nutty, Caramel
 
 session.add_all([drink1, drink2, drink3])
 
-# 6️⃣ Deduct stock automatically
+# 6️ Deduct stock automatically
 for drink in [drink1, drink2, drink3]:
     drink.bean.grams_in_stock -= drink.grams_used
 
 session.commit()
 session.close()
 
-print("✅ Database seeded with expanded sample beans, drinks, and flavors!")
+print(" Database seeded with expanded sample beans, drinks, and flavors!")
