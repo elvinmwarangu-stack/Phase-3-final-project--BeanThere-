@@ -122,3 +122,8 @@ CLI design and user interaction logic
 CSV reporting and business analytics
 
 Practical real-world application workflow
+
+
+
+## HERE IS A SLIDES ON THIS PROJECT LINK BELLOW
+https://docs.google.com/presentation/d/1b-XURKhG6R0yYI351z6zORXs4a5dQDF0U7EVG2ov78U/edit?slide=id.p#slide=id.p
