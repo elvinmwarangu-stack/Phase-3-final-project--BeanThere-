@@ -1,96 +1,116 @@
-# beanthere/cli.py  (CLICK-ONLY VERSION)
+
+# beanthere/cli.py
 import click
 from beanthere.engine import get_session
 from beanthere.models import Bean, Drink, Flavor
 from beanthere.reports import daily_report, export_csv
 
-
+# -------------------------
+# CLI group
+# -------------------------
 @click.group()
 def cli():
-    """BeanThere — Coffee Shop Management (Click Only)"""
+    """BeanThere — Coffee Shop Management CLI"""
     pass
 
-
+# -------------------------
+# Inventory command
+# -------------------------
 @cli.command()
 def inventory():
-    """Show current bean inventory"""
-    with get_session() as s:
-        beans = s.query(Bean).all()
+    """Show current bean inventory with low-stock warnings"""
+    session = get_session()
+    beans = session.query(Bean).all()
+    if not beans:
+        click.echo("No beans in inventory yet.")
+        session.close()
+        return
 
-    click.echo("=== Bean Inventory ===")
+    click.echo(f"{'Bean':20} {'Origin':15} {'Stock(g)':10} Status")
+    click.echo("-" * 60)
     for b in beans:
-        status = "OK" if b.grams_in_stock > 250 else "LOW"
-        click.echo(f"{b.name:20} {b.origin:12} {b.grams_in_stock:5.0f}g  [{status}]")
+        status = "GOOD" if b.grams_in_stock > 250 else "LOW STOCK"
+        click.echo(f"{b.name:20} {b.origin:15} {b.grams_in_stock:10.0f} {status}")
+    session.close()
 
-
+# -------------------------
+# Add or restock bean
+# -------------------------
 @cli.command()
 @click.argument("name")
 @click.argument("origin")
 @click.argument("grams", type=float)
 def addbean(name, origin, grams):
-    """Add or restock coffee beans"""
-    with get_session() as s:
-        bean = s.query(Bean).filter_by(name=name).first()
+    """Add a new bean or restock existing ones"""
+    session = get_session()
+    bean = session.query(Bean).filter_by(name=name).first()
+    if bean:
+        bean.grams_in_stock += grams
+        click.echo(f"Restocked {name} +{grams}g")
+    else:
+        bean = Bean(name=name, origin=origin, grams_in_stock=grams)
+        session.add(bean)
+        click.echo(f"Added new bean: {name} from {origin}")
+    session.commit()
+    session.close()
 
-        if bean:
-            bean.grams_in_stock += grams
-            msg = f"Restocked {name} +{grams}g"
-        else:
-            bean = Bean(name=name, origin=origin, grams_in_stock=grams)
-            s.add(bean)
-            msg = f"Added NEW bean: {name} ({origin})"
-
-        s.commit()
-
-    click.echo(msg)
-
-
+# -------------------------
+# Log a drink
+# -------------------------
 @cli.command()
 @click.argument("bean_name")
 @click.argument("grams", type=float)
 @click.argument("price", type=float)
-@click.option("--rating", prompt="Rating (1-5)", type=click.IntRange(1,5))
-@click.option("--notes", default="", prompt="Notes")
-@click.option("--flavors", default="", prompt="Flavors (comma-separated)")
+@click.option("--rating", type=click.IntRange(1, 5), prompt="Rating (1-5)")
+@click.option("--notes", prompt="Tasting notes", default="")
+@click.option("--flavors", prompt="Flavors (comma-separated)", default="")
 def log(bean_name, grams, price, rating, notes, flavors):
-    """Log a drink sale + deduct bean inventory"""
-    with get_session() as s:
-        bean = s.query(Bean).filter_by(name=bean_name).first()
+    """Log a drink — automatically deducts from inventory"""
+    session = get_session()
+    bean = session.query(Bean).filter_by(name=bean_name).first()
+    if not bean:
+        click.echo(f"Bean '{bean_name}' not found.")
+        session.close()
+        return
+    if bean.grams_in_stock < grams:
+        click.echo(f"Not enough {bean_name}! Only {bean.grams_in_stock:.0f}g left.")
+        session.close()
+        return
 
-        if not bean:
-            click.echo(f"ERROR: Bean '{bean_name}' not found")
-            return
+    drink = Drink(bean=bean, grams_used=grams, price_paid=price, rating=rating, notes=notes)
 
-        if bean.grams_in_stock < grams:
-            click.echo(f"ERROR: Only {bean.grams_in_stock:.0f}g left")
-            return
-
-        drink = Drink(bean=bean, grams_used=grams, price_paid=price,
-                      rating=rating, notes=notes)
-
-        for f in [x.strip() for x in flavors.split(",") if x.strip()]:
-            flavor = s.query(Flavor).filter_by(name=f).first() or Flavor(name=f)
+    if flavors:
+        for f_name in [x.strip() for x in flavors.split(",") if x.strip()]:
+            flavor = session.query(Flavor).filter_by(name=f_name).first()
+            if not flavor:
+                flavor = Flavor(name=f_name)
+                session.add(flavor)
             drink.flavors.append(flavor)
-            s.add(flavor)
 
-        bean.grams_in_stock -= grams
-        s.add(drink)
-        s.commit()
+    bean.grams_in_stock -= grams
+    session.add(drink)
+    session.commit()
+    session.close()
+    click.echo(f"Logged {grams}g of {bean_name} — ${price} — {rating} stars")
 
-    click.echo(f"Logged {grams}g of {bean_name} for ${price} — {rating}★")
-
-
+# -------------------------
+# Daily report command
+# -------------------------
 @cli.command()
 def report():
-    """Show daily summary"""
+    """Daily sales, profit, and vibe check"""
     daily_report()
 
-
+# -------------------------
+# Export CSV command
+# -------------------------
 @cli.command()
 def export():
-    """Save today's orders to CSV"""
+    """Export today’s drinks to CSV"""
     export_csv()
 
-
+# -------------------------
+# CLI entrypoint
+# -------------------------
 if __name__ == "__main__":
     cli()

@@ -1,61 +1,73 @@
 # beanthere/reports.py
-from rich.console import Console
+from sqlalchemy.orm import joinedload
 from beanthere.engine import get_session
 from beanthere.models import Drink
 from datetime import date
 import csv
 from collections import Counter
-
-console = Console()
+import click
 
 # -------------------------
-# Rating dictionary
+# Vibe scale function
 # -------------------------
-VIBE_SCALE = {
-    4.7: "[bold magenta]Transcendent[/]",
-    4.2: "[bold green]Excellent[/]",
-    3.5: "[yellow]Good[/]",
-    0:   "[red]Needs work[/]"
-}
+def get_vibe(avg_rating):
+    if avg_rating >= 4.7:
+        return "Transcendent"
+    elif avg_rating >= 4.2:
+        return "Excellent"
+    elif avg_rating >= 3.5:
+        return "Good"
+    else:
+        return "Needs work"
 
+# -------------------------
+# Daily report
+# -------------------------
 def daily_report():
     session = get_session()
     today = date.today()
-    drinks_today = session.query(Drink).filter(Drink.created_at >= today).all()
-    session.close()
+    drinks_today = (
+        session.query(Drink)
+        .options(joinedload(Drink.bean), joinedload(Drink.flavors))
+        .filter(Drink.created_at >= today)
+        .all()
+    )
 
     if not drinks_today:
-        console.print("[yellow]No drinks logged today yet.[/]")
+        click.echo("No drinks logged today yet.")
+        session.close()
         return
 
     revenue = sum(d.price_paid for d in drinks_today)
     cost = sum((d.grams_used / 1000) * d.bean.cost_per_kg for d in drinks_today)
     profit = revenue - cost
     avg_rating = sum(d.rating for d in drinks_today) / len(drinks_today)
-
-    # -------------------------
-    # Vibe via dictionary lookup
-    # -------------------------
-    for score, description in VIBE_SCALE.items():
-        if avg_rating >= score:
-            vibe = description
-            break
+    vibe = get_vibe(avg_rating)
 
     top_bean = Counter(d.bean.name for d in drinks_today).most_common(1)[0]
 
-    console.print("\n[bold underline]BeanThere Daily Report[/]")
-    console.print(f"Drinks served : {len(drinks_today)}")
-    console.print(f"Revenue       : [green]${revenue:.2f}[/]")
-    console.print(f"Bean cost     : [red]${cost:.2f}[/]")
-    console.print(f"Profit        : [bold green]${profit:.2f}[/]")
-    console.print(f"Vibe check    : {avg_rating:.2f}/5 → {vibe}")
-    console.print(f"Top bean      : [cyan]{top_bean[0]}[/] ({top_bean[1]} drinks)")
+    click.echo("\nBeanThere Daily Report")
+    click.echo(f"Drinks served : {len(drinks_today)}")
+    click.echo(f"Revenue       : ${revenue:.2f}")
+    click.echo(f"Bean cost     : ${cost:.2f}")
+    click.echo(f"Profit        : ${profit:.2f}")
+    click.echo(f"Vibe check    : {avg_rating:.2f}/5 → {vibe}")
+    click.echo(f"Top bean      : {top_bean[0]} ({top_bean[1]} drinks)")
 
+    session.close()
 
+# -------------------------
+# Export CSV
+# -------------------------
 def export_csv():
     session = get_session()
     today = date.today()
-    drinks = session.query(Drink).filter(Drink.created_at >= today).all()
+    drinks = (
+        session.query(Drink)
+        .options(joinedload(Drink.bean), joinedload(Drink.flavors))
+        .filter(Drink.created_at >= today)
+        .all()
+    )
     session.close()
 
     filename = f"beanthere_{today}.csv"
@@ -70,4 +82,4 @@ def export_csv():
                 d.price_paid, d.rating, d.notes, flavors
             ])
 
-    console.print(f"[green]Exported to {filename}[/]")
+    click.echo(f"Exported to {filename}")
